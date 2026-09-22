@@ -4,6 +4,7 @@
 
 - **External API Decoupling:** External third-party APIs (Upstox, IPO Guru, IPO Alerts) are **NEVER called directly from the client browser**. All external fetches are isolated within backend ingestion handlers.
 - **Client Read Strategy:** Next.js Server Components query Neon PostgreSQL directly via Drizzle ORM. Client-side components consume normalized endpoints backed by Edge caching.
+- **Category Query Support:** Public endpoints dynamically filter by IPO Type (`category=MAINBOARD` [default], `category=SME`, or `category=ALL`).
 - **Refresh vs. Cache Distinction:**
   - **Data Refresh Frequency:** How often our backend polls external providers (scheduled 2-4x daily or via manual trigger).
   - **Page/API Cache Duration:** How long Vercel Edge / browser retains cached JSON before revalidating against Neon DB (2-5 minutes).
@@ -28,34 +29,45 @@
 ### 3.1 Public Read Endpoints
 
 #### `GET /api/ipos`
-- **Description:** Retrieve list of Mainboard IPOs filtered by status.
-- **Query Parameters:** `status` (`UPCOMING` | `OPEN` | `CLOSED` | `LISTED`), `search` (string), `limit` (default: 20), `page` (default: 1).
-- **Category Filter:** Enforces `category = 'MAINBOARD'`.
+- **Description:** Retrieve list of IPOs filtered by category and status.
+- **Query Parameters:**
+  - `category` (enum: `MAINBOARD` | `SME` | `ALL`, **Default: `MAINBOARD`**)
+  - `status` (enum: `UPCOMING` | `OPEN` | `CLOSED` | `LISTED`, optional)
+  - `search` (string, optional - searches company name and symbol)
+  - `limit` (integer, default: 20)
+  - `page` (integer, default: 1)
+- **Filter Resolution:**
+  - `category=MAINBOARD` → `WHERE category = 'MAINBOARD'`
+  - `category=SME` → `WHERE category = 'SME'`
+  - `category=ALL` → `WHERE category IN ('MAINBOARD', 'SME')`
+  - *Invariant:* Records where `category = 'UNKNOWN'` are strictly quarantined and never returned.
 - **Cache-Control:** `public, s-maxage=300, stale-while-revalidate=600`.
 
 #### `GET /api/ipos/[slug]`
-- **Description:** Retrieve comprehensive details for a specific Mainboard IPO, including price band, lot size, issue breakdown, quotas, and dates.
+- **Description:** Retrieve comprehensive details for a specific IPO (Mainboard or SME), including category flag, price band, lot size, issue breakdown, quotas, and dates.
+- **Response Shape:**
+  ```json
+  {
+    "success": true,
+    "data": {
+      "companyName": "Sample Tech Limited",
+      "symbol": "SAMPLE",
+      "slug": "sample-tech-limited",
+      "category": "MAINBOARD", // or "SME"
+      "status": "OPEN",
+      "priceBandMin": 450,
+      "priceBandMax": 475,
+      "lotSize": 30,
+      "minInvestment": 14250,
+      "dates": { ... }
+    }
+  }
+  ```
 - **Cache-Control:** `public, s-maxage=300, stale-while-revalidate=600`.
 
 #### `GET /api/ipos/[slug]/gmp`
 - **Description:** Retrieve historical GMP data points, estimated listing price, and timestamp metadata.
 - **Cache-Control:** `public, s-maxage=120, stale-while-revalidate=600`.
-- **Response Format:**
-  ```json
-  {
-    "success": true,
-    "ipoSlug": "sample-ipo",
-    "latest": {
-      "gmpAmount": 120,
-      "gmpPercentage": 24.5,
-      "estimatedListingPrice": 610,
-      "source": "ipo_guru",
-      "sourceTimestamp": "2026-09-22T10:00:00Z",
-      "isOfficial": false
-    },
-    "history": [ ... ]
-  }
-  ```
 
 #### `GET /api/ipos/[slug]/subscription`
 - **Description:** Retrieve current and time-series subscription multiples (QIB, sNII, bNII, Retail, Total).
@@ -82,8 +94,8 @@
 - **Description:** Stateless allotment status lookup.
 - **Privacy Constraints:**
   - **ZERO DATABASE STORAGE:** No records written to Neon PostgreSQL.
-  - **TRANSIENT RAM ONLY:** PAN parsed in memory, dispatched to registrar (LinkIntime, KFintech), response formatted, memory released.
-  - **LOG SANITIZATION:** PAN is masked (`AXXXXX123F`) in any debug outputs.
+  - **TRANSIENT RAM ONLY:** PAN parsed in memory, dispatched to registrar, response formatted, memory released.
+  - **LOG SANITIZATION:** PAN is masked in all server traces.
 - **Cache-Control:** `no-store, max-age=0`.
 
 ---
@@ -96,8 +108,9 @@
 - **Request Body (Optional):**
   ```json
   {
-    "providerId": "upstox", // optional: trigger specific provider
-    "target": "subscription" // optional: 'all' | 'ipos' | 'gmp' | 'subscription'
+    "providerId": "upstox",
+    "category": "ALL", // 'MAINBOARD' | 'SME' | 'ALL'
+    "target": "subscription"
   }
   ```
 - **Response:** Execution summary with processed count and ingestion status.
@@ -106,6 +119,6 @@
 
 ## 4. Secret & API Key Security Policies
 
-1. **Server-Side Isolation:** All external API tokens (`UPSTOX_API_KEY`, `IPO_GURU_KEY`, `CRON_SECRET`) are accessed strictly on the server runtime.
+1. **Server-Side Isolation:** All external API tokens are accessed strictly on the server runtime.
 2. **No Client Leakage:** No secret will ever be exposed through `NEXT_PUBLIC_` environment variables or serialized into page HTML.
-3. **No Key Logging:** Ingestion logs record timestamps, status codes, and record counts; API keys and user credentials are never logged.
+3. **No Key Logging:** Ingestion logs record timestamps, status codes, and record counts; API keys are never logged.
