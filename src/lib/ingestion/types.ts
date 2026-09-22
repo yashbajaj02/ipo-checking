@@ -70,7 +70,7 @@ export interface ExternalIpoProviderAdapter {
   readonly providerName: string;
   readonly priorityRank: number; // 1 is highest priority
 
-  fetchMainboardIpos(): Promise<NormalizedIpoPayload[]>;
+  fetchIpos(): Promise<NormalizedIpoPayload[]>;
   fetchGmpData(companySlug?: string): Promise<NormalizedGmpPayload[]>;
   fetchSubscriptionData(companySlug?: string): Promise<NormalizedSubscriptionPayload[]>;
 }

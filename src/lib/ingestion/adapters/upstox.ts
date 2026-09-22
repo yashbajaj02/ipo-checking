@@ -10,9 +10,9 @@ export class UpstoxIpoProviderAdapter extends BaseIpoProviderAdapter {
   readonly providerName = 'Upstox IPO API';
   readonly priorityRank = 1; // Highest priority for official broker API data
 
-  async fetchMainboardIpos(): Promise<NormalizedIpoPayload[]> {
+  async fetchIpos(): Promise<NormalizedIpoPayload[]> {
     // Adapter integration skeleton for Upstox API
-    // Returns normalized Mainboard IPO data
+    // Returns normalized Mainboard and SME IPO data
     return [];
   }
 

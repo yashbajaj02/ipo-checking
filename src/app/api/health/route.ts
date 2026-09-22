@@ -20,7 +20,7 @@ export async function GET() {
       provider: 'Neon PostgreSQL (Serverless HTTP)',
     },
     architecture: {
-      scope: 'MAINBOARD ONLY (SME Excluded)',
+      scope: 'MAINBOARD & SME (User-Selectable, Mainboard Default)',
       privacy: 'Zero Database PAN Retention',
       refreshModel: 'Decoupled Scheduled Ingestion & SWR Edge Caching',
     },

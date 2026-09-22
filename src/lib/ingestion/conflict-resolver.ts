@@ -46,7 +46,7 @@ export class IpoConflictResolver {
     // Build resolved IPO payload starting from primary provider
     const resolved: NormalizedIpoPayload = {
       ...primary,
-      category: 'MAINBOARD', // Strictly enforce Mainboard category
+      category: primary.category,
     };
 
     // Fall back to lower-priority providers for any missing fields (null / undefined)

@@ -4,6 +4,7 @@ See the complete API strategy documentation at [`docs/API_STRATEGY.md`](file:///
 
 ### Core Highlights
 - **Ingestion Decoupling:** Client browsers NEVER query external APIs. All external ingestion is backend-only.
+- **Category Query Parameters:** `GET /api/ipos?category=MAINBOARD|SME|ALL` (default: `MAINBOARD`). `UNKNOWN` records are never returned.
 - **Refresh vs Cache Distinction:** Decoupled scheduled ingestion (2-4x daily) from Edge/ISR cache duration (2-5 minutes).
 - **Public Routes:** `/api/ipos`, `/api/ipos/[slug]`, `/api/ipos/[slug]/gmp`, `/api/ipos/[slug]/subscription`, `/api/ipos/[slug]/listing`.
 - **Ephemeral Allotment Proxy:** `/api/allotment/check` (transient in-memory, zero DB persistence, masked logs).

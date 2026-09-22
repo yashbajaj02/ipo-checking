@@ -10,7 +10,7 @@ export class IpoGuruProviderAdapter extends BaseIpoProviderAdapter {
   readonly providerName = 'IPO Guru Data Source';
   readonly priorityRank = 2; // Secondary source with strong GMP tracking
 
-  async fetchMainboardIpos(): Promise<NormalizedIpoPayload[]> {
+  async fetchIpos(): Promise<NormalizedIpoPayload[]> {
     return [];
   }
 

@@ -10,14 +10,19 @@ export abstract class BaseIpoProviderAdapter implements ExternalIpoProviderAdapt
   abstract readonly providerName: string;
   abstract readonly priorityRank: number;
 
-  abstract fetchMainboardIpos(): Promise<NormalizedIpoPayload[]>;
+  abstract fetchIpos(): Promise<NormalizedIpoPayload[]>;
   abstract fetchGmpData(companySlug?: string): Promise<NormalizedGmpPayload[]>;
   abstract fetchSubscriptionData(companySlug?: string): Promise<NormalizedSubscriptionPayload[]>;
 
   /**
-   * Filter out any SME IPOs to guarantee strict Mainboard compliance.
+   * Filter valid categories eligible for publishing:
+   * - MAINBOARD: Accepted (default user view)
+   * - SME: Accepted (user-selectable filter)
+   * - UNKNOWN / UNVERIFIED: Excluded from public ingestion & quarantined
    */
-  protected filterMainboardOnly(items: NormalizedIpoPayload[]): NormalizedIpoPayload[] {
-    return items.filter((item) => item.category === 'MAINBOARD');
+  protected filterValidCategories(items: NormalizedIpoPayload[]): NormalizedIpoPayload[] {
+    return items.filter(
+      (item) => item.category === 'MAINBOARD' || item.category === 'SME'
+    );
   }
 }

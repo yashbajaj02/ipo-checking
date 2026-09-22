@@ -16,7 +16,7 @@ export class IpoAlertsProviderAdapter extends BaseIpoProviderAdapter {
   readonly providerName = 'IPO Alerts Data Source';
   readonly priorityRank = 3; // Priority ranking pending sandbox validation
 
-  async fetchMainboardIpos(): Promise<NormalizedIpoPayload[]> {
+  async fetchIpos(): Promise<NormalizedIpoPayload[]> {
     // Placeholder - to be implemented after API response verification
     return [];
   }

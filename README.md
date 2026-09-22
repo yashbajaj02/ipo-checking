@@ -19,7 +19,7 @@ All approved project specifications and architecture decisions reside in the [`d
 
 ## 🔒 Locked Architecture Principles
 
-1. **Mainboard Focus Only:** SME issues (BSE SME / NSE Emerge) are strictly excluded from the user catalog.
+1. **User-Selectable IPO Types:** Both Mainboard and SME IPOs are supported with a global user-selectable filter (`Mainboard` default, `SME`, `All`). `UNKNOWN` records are quarantined and never published.
 2. **Explicit Metadata Triage:** Board classification is determined solely from explicit exchange/provider category metadata. Issue-size heuristics are strictly prohibited.
 3. **Neon PostgreSQL Database:** Chosen over Supabase to preserve existing occupied projects and take advantage of serverless HTTP pooling and branching.
 4. **Zero Database Retention for PANs:** Under no circumstances will a `user_pans` table exist in PostgreSQL. Allotment lookups are ephemeral in-memory proxies.
