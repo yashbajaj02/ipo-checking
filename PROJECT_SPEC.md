@@ -1,6 +1,6 @@
 # Project Specification: Indian IPO Research & Tracking Platform
 
-See the complete specification at [`docs/PROJECT_SPEC.md`](file:///home/yash-bajaj/Downloads/project/ipo%20checking/docs/PROJECT_SPEC.md).
+See the complete specification at [`docs/PROJECT_SPEC.md`](./docs/PROJECT_SPEC.md).
 
 ### Core Highlights
 - **Scope:** Supports **BOTH Mainboard and SME IPOs** with a user-selectable filter (`Mainboard` default, `SME`, `All`).

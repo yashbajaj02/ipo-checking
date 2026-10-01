@@ -1,6 +1,6 @@
 # Architecture Decision Log (DECISIONS.md)
 
-See full decision log at [`DECISIONS.md`](file:///home/yash-bajaj/Downloads/project/ipo%20checking/DECISIONS.md).
+See full decision log at [`DECISIONS.md`](../DECISIONS.md).
 
 Summary of Locked Decisions:
 - **ADR-001 (Updated):** User-Selectable IPO Types (Mainboard Default, SME and All as Explicit Filters).

@@ -33,23 +33,20 @@ export class IpoConflictResolver {
       throw new Error('Cannot resolve IPO payload: No provider observations provided.');
     }
 
-    // Sort observations by provider priority rank (1 = highest priority), then recency
+    // Sort observations by recency (most recent observation first)
     const sorted = [...observations].sort((a, b) => {
-      if (a.provider.priorityRank !== b.provider.priorityRank) {
-        return a.provider.priorityRank - b.provider.priorityRank;
-      }
       return b.fetchedAt.getTime() - a.fetchedAt.getTime();
     });
 
     const primary = sorted[0].data;
 
-    // Build resolved IPO payload starting from primary provider
+    // Build resolved IPO payload starting from most recent observation
     const resolved: NormalizedIpoPayload = {
       ...primary,
       category: primary.category,
     };
 
-    // Fall back to lower-priority providers for any missing fields (null / undefined)
+    // Combine missing fields from other observations (non-null merging)
     for (const obs of sorted.slice(1)) {
       const d = obs.data;
       if (resolved.priceBandMin == null && d.priceBandMin != null) resolved.priceBandMin = d.priceBandMin;
@@ -85,10 +82,8 @@ export class IpoConflictResolver {
     }
 
     const sorted = [...observations].sort((a, b) => {
-      // Prioritize timestamp recency for non-official market info (GMP)
-      const timeDiff = b.data.sourceTimestamp.getTime() - a.data.sourceTimestamp.getTime();
-      if (timeDiff !== 0) return timeDiff;
-      return a.provider.priorityRank - b.provider.priorityRank;
+      // Prioritize timestamp recency for market info (GMP)
+      return b.data.sourceTimestamp.getTime() - a.data.sourceTimestamp.getTime();
     });
 
     const newest = sorted[0];

@@ -1,6 +1,6 @@
 # UI/UX Implementation Plan: Apex Dalal Terminal (Mainboard & SME Support)
 
-Based on the Google Stitch design specification ([`design/DESIGN.md`](file:///home/yash-bajaj/Downloads/project/ipo%20checking/design/DESIGN.md)) and aligned strictly with the architectural source of truth in [`docs/`](file:///home/yash-bajaj/Downloads/project/ipo%20checking/docs/).
+Based on the Google Stitch design specification ([`design/DESIGN.md`](../design/DESIGN.md)) and aligned strictly with the architectural source of truth in [`docs/`](./).
 
 ---
 

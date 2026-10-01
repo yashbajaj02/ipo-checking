@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "app",
+  "main": "workers/main.ts",
+  "compatibility_date": "2024-09-23",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "triggers": {
+    "crons": [
+      "*/30 * * * *"
+    ]
+  },
+  "vars": {
+    "NEXT_PUBLIC_APP_NAME": "IPO Deals",
+    "NEXT_PUBLIC_APP_URL": "https://app.ipodeals.workers.dev",
+    "GOOGLE_CLIENT_ID": "613740763753-tb8h6rvdj98cvj1r905srsjsrvg6eahj.apps.googleusercontent.com"
+  }
+}

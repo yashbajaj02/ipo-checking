@@ -16,8 +16,8 @@
 
 | Operation | Trigger / Mechanism | Target Schedule | Data Flow | External API Impact |
 |---|---|---|---|---|
-| **Scheduled Ingestion** | Vercel Cron / Webhook | 2-4 runs/business day (09:30, 13:00, 16:30, 18:00 IST) | External Providers → Backend Ingestion → Neon DB | Minimal (fixed predictable calls) |
-| **Manual / Ad-hoc Ingestion** | Protected `POST /api/ingest/trigger` (Auth: `CRON_SECRET`) | On-demand (breaking RHP filing or allotment drop) | External Providers → Backend Ingestion → Neon DB | Triggered strictly by admin |
+| **Scheduled Ingestion** | GitHub Actions Workflow (`.github/workflows/hourly-ipo-ingestion.yml`) calling `POST /api/ingest/trigger` | Hourly (`0 * * * *`) | Active Provider (IPO Alerts -> IPO Guru fallback) → Backend Ingestion → Neon DB | 1 call/hour max per provider |
+| **Manual / Ad-hoc Ingestion** | Protected `POST /api/ingest/trigger` (Auth: `CRON_SECRET`) | On-demand (admin sync or GitHub dispatch) | Active Provider → Backend Ingestion → Neon DB | Triggered strictly by admin |
 | **Public IPO Catalog Read** | Next.js ISR (`revalidate = 300`) | On-demand with 5-minute background regeneration | Client ← Vercel Edge Cache ← Neon DB | **0 external API calls** |
 | **GMP / Subscription Read** | HTTP Route (`s-maxage=120, stale-while-revalidate=600`) | On-demand with 2-minute Edge cache | Client ← Vercel Edge Cache ← Neon DB | **0 external API calls** |
 | **Allotment Check (Deferred)** | Ephemeral `POST /api/allotment/check` | On-demand user action | Client → Next.js Route (RAM) → Registrar API | Direct registrar lookup; zero DB write |

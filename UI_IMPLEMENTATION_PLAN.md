@@ -1,6 +1,6 @@
 # UI Implementation Plan: Apex Dalal Terminal (Mainboard & SME Support)
 
-See the complete UI/UX implementation plan at [`docs/UI_IMPLEMENTATION_PLAN.md`](file:///home/yash-bajaj/Downloads/project/ipo%20checking/docs/UI_IMPLEMENTATION_PLAN.md).
+See the complete UI/UX implementation plan at [`docs/UI_IMPLEMENTATION_PLAN.md`](./docs/UI_IMPLEMENTATION_PLAN.md).
 
 ### Core Highlights
 - **Design System:** Apex Dalal Terminal (Google Stitch specification from `design/DESIGN.md`).

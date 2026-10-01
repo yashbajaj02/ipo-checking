@@ -10,13 +10,15 @@ export type IpoStatus = z.infer<typeof IpoStatusSchema>;
 // Normalized IPO Details Payload from any External Provider
 export const NormalizedIpoPayloadSchema = z.object({
   companyName: z.string().min(1),
-  symbol: z.string().optional(),
+  symbol: z.string().nullable().optional(),
   slug: z.string().min(1),
   category: IpoCategorySchema,
   status: IpoStatusSchema,
   priceBandMin: z.number().nullable().optional(),
   priceBandMax: z.number().nullable().optional(),
+  issuePrice: z.number().nullable().optional(),
   lotSize: z.number().int().nullable().optional(),
+  minInvestment: z.number().nullable().optional(),
   issueSizeCrores: z.number().nullable().optional(),
   freshIssueCrores: z.number().nullable().optional(),
   ofsCrores: z.number().nullable().optional(),
@@ -24,8 +26,16 @@ export const NormalizedIpoPayloadSchema = z.object({
   retailQuotaPercent: z.number().nullable().optional(),
   qibQuotaPercent: z.number().nullable().optional(),
   niiQuotaPercent: z.number().nullable().optional(),
-  drhpUrl: z.string().url().nullable().optional(),
-  rhpUrl: z.string().url().nullable().optional(),
+  drhpUrl: z.string().nullable().optional(),
+  rhpUrl: z.string().nullable().optional(),
+  listingExchange: z.string().nullable().optional(),
+  registrar: z.string().nullable().optional(),
+  registrarUrl: z.string().nullable().optional(),
+  logoUrl: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  strengths: z.array(z.string()).nullable().optional(),
+  risks: z.array(z.string()).nullable().optional(),
+  listingPrice: z.number().nullable().optional(),
   dates: z.object({
     offerStartDate: z.string().nullable().optional(), // YYYY-MM-DD
     offerEndDate: z.string().nullable().optional(),
@@ -68,9 +78,52 @@ export type NormalizedSubscriptionPayload = z.infer<typeof NormalizedSubscriptio
 export interface ExternalIpoProviderAdapter {
   readonly providerId: string;
   readonly providerName: string;
-  readonly priorityRank: number; // 1 is highest priority
+  readonly priorityRank: number; // 1 is highest priority (1. IPO Guru, 2. IPO Alerts, 3. Upstox)
 
+  isConfigured(): boolean;
   fetchIpos(): Promise<NormalizedIpoPayload[]>;
   fetchGmpData(companySlug?: string): Promise<NormalizedGmpPayload[]>;
   fetchSubscriptionData(companySlug?: string): Promise<NormalizedSubscriptionPayload[]>;
+}
+
+// Dedicated Error for HTTP 429 or Quota Limit Exceeded
+export class ProviderQuotaExceededError extends Error {
+  readonly providerId: string;
+  readonly resetAt: Date;
+  readonly statusCode: number;
+
+  constructor(
+    providerId: string,
+    resetAt: Date,
+    message = 'External provider quota or rate limit exceeded',
+    statusCode = 429
+  ) {
+    super(`[${providerId}] ${message} (rate-limited until: ${resetAt.toISOString()})`);
+    this.name = 'ProviderQuotaExceededError';
+    this.providerId = providerId;
+    this.resetAt = resetAt;
+    this.statusCode = statusCode;
+  }
+}
+
+// Error for Missing Configuration or Explicit Disablement
+export class ProviderUnavailableError extends Error {
+  readonly providerId: string;
+
+  constructor(providerId: string, message: string) {
+    super(`[${providerId}] ${message}`);
+    this.name = 'ProviderUnavailableError';
+    this.providerId = providerId;
+  }
+}
+
+// Ingestion Result Summary Interface
+export interface IngestionCycleResult {
+  success: boolean;
+  providerUsed: string;
+  fallbackOccurred: boolean;
+  fallbackReason?: string;
+  recordsProcessed: number;
+  timestamp: Date;
+  details?: Record<string, unknown>;
 }

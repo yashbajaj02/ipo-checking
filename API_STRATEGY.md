@@ -1,6 +1,6 @@
 # API Strategy & Route Handlers
 
-See the complete API strategy documentation at [`docs/API_STRATEGY.md`](file:///home/yash-bajaj/Downloads/project/ipo%20checking/docs/API_STRATEGY.md).
+See the complete API strategy documentation at [`docs/API_STRATEGY.md`](./docs/API_STRATEGY.md).
 
 ### Core Highlights
 - **Ingestion Decoupling:** Client browsers NEVER query external APIs. All external ingestion is backend-only.

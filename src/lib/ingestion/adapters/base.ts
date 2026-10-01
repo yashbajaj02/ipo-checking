@@ -10,6 +10,7 @@ export abstract class BaseIpoProviderAdapter implements ExternalIpoProviderAdapt
   abstract readonly providerName: string;
   abstract readonly priorityRank: number;
 
+  abstract isConfigured(): boolean;
   abstract fetchIpos(): Promise<NormalizedIpoPayload[]>;
   abstract fetchGmpData(companySlug?: string): Promise<NormalizedGmpPayload[]>;
   abstract fetchSubscriptionData(companySlug?: string): Promise<NormalizedSubscriptionPayload[]>;

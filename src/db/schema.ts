@@ -10,7 +10,6 @@ import {
   text,
   jsonb,
   pgEnum,
-  uniqueIndex,
   index,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
@@ -54,11 +53,64 @@ export const profiles = pgTable('profiles', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   displayName: varchar('display_name', { length: 100 }),
+  avatarUrl: text('avatar_url'),
+  googleId: varchar('google_id', { length: 255 }),
   preferences: jsonb('preferences').default({}),
+  termsAcceptedAt: timestamp('terms_accepted_at', { withTimezone: true }),
+  termsVersion: varchar('terms_version', { length: 20 }),
+  privacyAcceptedAt: timestamp('privacy_accepted_at', { withTimezone: true }),
+  privacyVersion: varchar('privacy_version', { length: 20 }),
   createdAt: timestamp('created_at', { withTimezone: true })
     .defaultNow()
     .notNull(),
 });
+
+// User PAN Cards Table (Secure server-side storage)
+export const userPans = pgTable(
+  'user_pans',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    holderName: varchar('holder_name', { length: 255 }).notNull(),
+    panNumber: text('pan_number').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('idx_user_pans_user_id').on(table.userId),
+  ]
+);
+
+// User Device Sessions Table (Real server-side session tracking)
+export const userSessions = pgTable(
+  'user_sessions',
+  {
+    id: varchar('id', { length: 255 }).primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    deviceType: varchar('device_type', { length: 50 }).default('mobile').notNull(),
+    deviceName: varchar('device_name', { length: 255 }).notNull(),
+    userAgent: text('user_agent'),
+    ipAddress: varchar('ip_address', { length: 100 }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    lastActiveAt: timestamp('last_active_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    index('idx_user_sessions_user_id').on(table.userId),
+  ]
+);
 
 // IPO Main Entity Table
 export const ipos = pgTable(
@@ -82,6 +134,17 @@ export const ipos = pgTable(
     niiQuotaPercent: numeric('nii_quota_percent', { precision: 5, scale: 2 }),
     drhpUrl: text('drhp_url'),
     rhpUrl: text('rhp_url'),
+    listingExchange: varchar('listing_exchange', { length: 100 }),
+    registrar: varchar('registrar', { length: 255 }),
+    registrarUrl: text('registrar_url'),
+    logoUrl: text('logo_url'),
+    description: text('description'),
+    strengths: jsonb('strengths'),
+    risks: jsonb('risks'),
+    aiDescription: text('ai_description'),
+    aiSourceHash: varchar('ai_source_hash', { length: 64 }),
+    aiGeneratedAt: timestamp('ai_generated_at', { withTimezone: true }),
+    aiModelVersion: varchar('ai_model_version', { length: 50 }),
     createdAt: timestamp('created_at', { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -205,40 +268,7 @@ export const ipoListingResults = pgTable('ipo_listing_results', {
     .notNull(),
 });
 
-// Watchlists Table
-export const watchlists = pgTable(
-  'watchlists',
-  {
-    id: uuid('id').defaultRandom().primaryKey(),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
-    ipoId: uuid('ipo_id')
-      .notNull()
-      .references(() => ipos.id, { onDelete: 'cascade' }),
-    createdAt: timestamp('created_at', { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-  },
-  (table) => [
-    uniqueIndex('uniq_watchlist_user_ipo').on(table.userId, table.ipoId),
-  ]
-);
 
-// Notifications Table
-export const notifications = pgTable('notifications', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  userId: uuid('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  ipoId: uuid('ipo_id').references(() => ipos.id, { onDelete: 'cascade' }),
-  eventType: varchar('event_type', { length: 50 }).notNull(),
-  channel: varchar('channel', { length: 20 }).default('WEB_PUSH').notNull(),
-  isRead: boolean('is_read').default(false).notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
 
 // Ingestion Audit Logs Table
 export const ingestionLogs = pgTable('ingestion_logs', {
@@ -252,6 +282,36 @@ export const ingestionLogs = pgTable('ingestion_logs', {
     .notNull(),
 });
 
+// Automatic IPO Action Scores Table (Backend Automatic Action Engine)
+export const ipoActionScores = pgTable(
+  'ipo_action_scores',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    ipoId: uuid('ipo_id')
+      .notNull()
+      .unique()
+      .references(() => ipos.id, { onDelete: 'cascade' }),
+    score: numeric('score', { precision: 5, scale: 2 }).notNull(),
+    action: varchar('action', { length: 20 }).notNull(), // 'APPLY' | 'MAY_APPLY' | 'AVOID'
+    confidence: varchar('confidence', { length: 10 }).notNull(), // 'HIGH' | 'MEDIUM' | 'LOW'
+    gmpScore: numeric('gmp_score', { precision: 5, scale: 2 }),
+    qibScore: numeric('qib_score', { precision: 5, scale: 2 }),
+    niiScore: numeric('nii_score', { precision: 5, scale: 2 }),
+    financialScore: numeric('financial_score', { precision: 5, scale: 2 }),
+    valuationScore: numeric('valuation_score', { precision: 5, scale: 2 }),
+    issueStructureScore: numeric('issue_structure_score', { precision: 5, scale: 2 }),
+    riskScore: numeric('risk_score', { precision: 5, scale: 2 }),
+    explanations: jsonb('explanations'),
+    engineVersion: varchar('engine_version', { length: 20 }).default('1.0').notNull(),
+    calculatedAt: timestamp('calculated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('idx_action_scores_ipo_id').on(table.ipoId),
+  ]
+);
+
 // Drizzle Relations
 export const iposRelations = relations(ipos, ({ one, many }) => ({
   dates: one(ipoDates, {
@@ -264,4 +324,9 @@ export const iposRelations = relations(ipos, ({ one, many }) => ({
     fields: [ipos.id],
     references: [ipoListingResults.ipoId],
   }),
+  actionScore: one(ipoActionScores, {
+    fields: [ipos.id],
+    references: [ipoActionScores.ipoId],
+  }),
 }));
+

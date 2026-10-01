@@ -1,107 +1,134 @@
-# Mainboard IPO Research & Tracking Platform
+# IPO Deals — Real-Time Indian IPO Intelligence Platform
 
-A privacy-first, free-tier optimized Indian Mainboard IPO tracking platform built with **Next.js 15 (App Router)**, **TypeScript**, **Tailwind CSS**, **Neon PostgreSQL**, and **Drizzle ORM**.
-
----
-
-## 📖 Architectural Source of Truth
-
-All approved project specifications and architecture decisions reside in the [`docs/`](./docs) directory:
-
-- [Project Specification](./docs/PROJECT_SPEC.md) — 24 core product features, Mainboard triage policy, and MVP boundaries.
-- [System Architecture](./docs/ARCHITECTURE.md) — System topology, decoupled refresh strategy, and SWR caching.
-- [Technical Specification](./docs/ARCHITECTURE_SPECIFICATION.md) — Deep technical reference and integration flows.
-- [Database Design](./docs/DATABASE_DESIGN.md) — Relational schema definitions and the strict prohibition of `user_pans`.
-- [API Strategy](./docs/API_STRATEGY.md) — Endpoint specifications, cache controls, and secret isolation.
-- [Decision Log (ADR)](./docs/DECISIONS.md) — 9 locked foundational architecture decisions.
+A privacy-focused, production-ready Indian Mainboard & SME IPO tracking platform built with **Next.js 16 (App Router)**, **React 19**, **TypeScript**, **Tailwind CSS**, **Neon PostgreSQL (Serverless HTTP)**, **Drizzle ORM**, and deployed as a **Cloudflare Worker** via **OpenNext** (`@opennextjs/cloudflare`).
 
 ---
 
-## 🔒 Locked Architecture Principles
+## 🚀 Key Features & Architecture
 
-1. **User-Selectable IPO Types:** Both Mainboard and SME IPOs are supported with a global user-selectable filter (`Mainboard` default, `SME`, `All`). `UNKNOWN` records are quarantined and never published.
-2. **Explicit Metadata Triage:** Board classification is determined solely from explicit exchange/provider category metadata. Issue-size heuristics are strictly prohibited.
-3. **Neon PostgreSQL Database:** Chosen over Supabase to preserve existing occupied projects and take advantage of serverless HTTP pooling and branching.
-4. **Zero Database Retention for PANs:** Under no circumstances will a `user_pans` table exist in PostgreSQL. Allotment lookups are ephemeral in-memory proxies.
-5. **Decoupled Ingestion & Caching:** Ingestion occurs 2–4 times/day during market hours (with an explicit manual trigger fallback), while Edge CDN serves cached snapshots via SWR (2–5 minutes).
-6. **Free-Tier Target (₹0/Month):** Architected to stay within free allowances of Vercel, Neon, and external APIs for ~500 users.
+1. **Active-Active Dual Provider Ingestion:**
+   - **IPO Alerts:** Basic catalog, exchange categories, dates, issue sizes, price bands, and official links.
+   - **IPO Guru:** Real-time Grey Market Premium (GMP), subscription demand (QIB, NII, Retail, Total), face value, fresh issue/OFS breakup, and registrar info.
+   - Independent provider execution with non-destructive merger and per-provider quota protection.
+
+2. **Real-Time Market Quotes:**
+   - Live LTP (Last Traded Price) and day change integration for listed IPOs using Upstox Market Quote API with in-memory caching.
+
+3. **Source-Grounded AI Insights:**
+   - Concise, 2–3 sentence company overviews generated strictly via Google Gemini (`gemini-3.8-flash`) with SHA-256 prompt hashing to prevent redundant API calls.
+
+4. **Security & PAN Data Protection:**
+   - Server-side **AES-256-GCM** authenticated encryption for saved PAN cards (`user_pans`).
+   - Plaintext PAN numbers never reach the browser, logs, or local storage. Masked display format: `ABCDE****F`.
+   - Strict per-user isolation prevents Insecure Direct Object References (IDOR).
+
+5. **Authentication & Legal Consent Gate:**
+   - Server-side Google OAuth 2.0 flow with cryptographically random state verification.
+   - One-time mandatory consent gate requiring explicit acceptance of Terms of Use (v1.0) and Privacy Policy (v1.0).
+   - Version tracking automatically requires re-consent if legal terms are updated.
+
+6. **Cloudflare Workers & Edge Deployment:**
+   - Bundled and executed on Cloudflare Workers via OpenNext (`@opennextjs/cloudflare`).
+   - Native Cloudflare `scheduled()` handler executes background cron triggers in-process without external HTTP calls.
 
 ---
 
-## 🚀 Getting Started
+## 🛠️ Technology Stack
 
-### 1. Prerequisites
-- Node.js 20+ and npm
-- A free [Neon PostgreSQL](https://console.neon.tech) account
+- **Framework:** Next.js 16.3.5 (App Router, Turbopack) & React 19
+- **Runtime Target:** Cloudflare Workers (via `@opennextjs/cloudflare` + Wrangler)
+- **Database:** Neon PostgreSQL (Serverless HTTP driver via `@neondatabase/serverless`)
+- **ORM:** Drizzle ORM (`drizzle-orm/neon-http`) & Drizzle Kit
+- **Styling:** Tailwind CSS & Lucide Icons
+- **Security:** AES-256-GCM PAN encryption, HTTP-only SameSite cookies
 
-### 2. Setup Environment
-Copy the environment template:
+---
+
+## 📋 Environment Configuration
+
+Copy the template and configure your local environment:
+
 ```bash
 cp .env.example .env.local
 ```
-Configure your Neon database connection string in `.env.local`:
-```env
-DATABASE_URL="postgresql://user:password@ep-sample-123456.us-east-2.aws.neon.tech/neondb?sslmode=require"
-CRON_SECRET="your-super-secret-cron-token"
-```
 
-> **SECURITY NOTE:** Never commit `.env.local` to version control. API keys and secrets must never be exposed to the client-side bundle (no `NEXT_PUBLIC_` prefix for secrets).
+### Required Configuration Variables:
+- `DATABASE_URL`: Neon PostgreSQL serverless HTTP connection string.
+- `CRON_SECRET`: Bearer secret token protecting backend ingestion endpoints.
+- `IPO_ALERTS_KEY`: API key for IPO Alerts catalog data.
+- `IPO_GURU_KEY`: API key for IPO Guru GMP and subscription data.
+- `UPSTOX_ANALYTICS_TOKEN`: Bearer token for Upstox live market quotes.
+- `GEMINI_API_KEY`: API key for Gemini company About enrichment (`gemini-3.8-flash`).
+- `PAN_ENCRYPTION_KEY`: 256-bit AES-GCM encryption key (64-character hex string).
+- `GOOGLE_CLIENT_ID` & `GOOGLE_CLIENT_SECRET`: Google Cloud OAuth 2.0 credentials.
+- `NEXT_PUBLIC_APP_NAME`: Application display name (e.g. `IPO Deals`).
+- `NEXT_PUBLIC_APP_URL`: Canonical public URL of the application.
 
-### 3. Database Schema & Migrations
-To generate migration SQL without applying it:
+> **SECURITY NOTE:** Never commit `.env.local` to Git. Secret keys must never use the `NEXT_PUBLIC_` prefix.
+
+---
+
+## 💻 Local Development & Quality Commands
+
 ```bash
-npm run db:generate
-```
-Migration SQL files are stored in `drizzle/` for manual inspection before running against any database.
+# 1. Install dependencies
+npm install
 
-### 4. Run Locally
-```bash
+# 2. Run Next.js local development server
 npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-Test the health-check endpoint:
-```bash
-curl http://localhost:3000/api/health
-```
 
----
-
-## 📁 Repository Structure
-
-```
-├── docs/                      # Architectural source of truth
-├── drizzle/                   # Generated SQL migration files
-├── public/                    # Static assets
-└── src/
-    ├── app/                   # Next.js App Router
-    │   ├── api/
-    │   │   └── health/        # Health check endpoint (/api/health)
-    │   ├── globals.css        # Tailwind CSS imports
-    │   ├── layout.tsx         # Root layout shell
-    │   └── page.tsx           # Home landing page
-    ├── components/            # UI components directory
-    │   ├── ui/                # Base primitives
-    │   ├── ipo/               # IPO feature widgets
-    │   └── layout/            # Navbar, footer, shells
-    ├── db/                    # Neon PostgreSQL + Drizzle ORM
-    │   ├── index.ts           # Serverless HTTP connection client
-    │   └── schema.ts          # Relational table definitions
-    └── lib/
-        ├── ingestion/         # Data ingestion layer
-        │   ├── adapters/      # Upstox, IPO Guru, IPO Alerts placeholders
-        │   ├── conflict-resolver.ts # Deterministic field fallback
-        │   └── types.ts       # Zod schemas and provider interfaces
-        ├── privacy/           # PAN security boundary (deferred module)
-        └── utils.ts           # Styling utility (cn)
-```
-
----
-
-## 🧪 Verification & Quality Checks
-
-Run linting and TypeScript checks:
-```bash
-npm run lint
+# 3. Type check & production Next.js build
 npx tsc --noEmit
 npm run build
+
+# 4. Compile Cloudflare Worker bundle
+npm run build:worker
+
+# 5. Preview locally inside the Cloudflare Worker runtime
+npx wrangler dev --env-file .env.local
+
+# 6. Database schema check
+npx drizzle-kit check
 ```
+
+---
+
+## 🚢 Production Deployment Guide
+
+### 1. Database (Neon PostgreSQL)
+1. Provision a Neon Serverless PostgreSQL database.
+2. Ensure migrations in `drizzle/` are applied to the production database:
+   ```bash
+   npx drizzle-kit migrate
+   ```
+
+### 2. Google OAuth 2.0
+In the Google Cloud Console (APIs & Services > Credentials):
+- **Authorized JavaScript Origins:** `https://<your-production-domain>`
+- **Authorized Redirect URIs:** `https://<your-production-domain>/api/auth/callback/google`
+
+### 3. Cloudflare Workers
+1. Configure production secrets via Wrangler CLI (or Cloudflare Dashboard):
+   ```bash
+   npx wrangler secret put DATABASE_URL
+   npx wrangler secret put CRON_SECRET
+   npx wrangler secret put IPO_ALERTS_KEY
+   npx wrangler secret put IPO_GURU_KEY
+   npx wrangler secret put UPSTOX_ANALYTICS_TOKEN
+   npx wrangler secret put GOOGLE_CLIENT_SECRET
+   npx wrangler secret put GEMINI_API_KEY
+   npx wrangler secret put PAN_ENCRYPTION_KEY
+   ```
+2. Build the production Worker artifact:
+   ```bash
+   npm run build:worker
+   ```
+3. Deploy to Cloudflare Workers:
+   ```bash
+   npx wrangler deploy
+   ```
+
+### 4. Background Ingestion Crons
+The Worker entrypoint (`workers/main.ts`) includes native `scheduled` event handling configured via `wrangler.jsonc`:
+- `0 2 * * *` (02:00 UTC) & `0 14 * * *` (14:00 UTC): Full static catalog + dynamic sync.
+- `*/30 * * * *` (Every 30 minutes): Dynamic pricing & GMP sync (automatically skipped when no active Open IPOs exist).

@@ -1,6 +1,6 @@
 # System Architecture: Indian IPO Research & Tracking Platform
 
-See the complete system architecture at [`docs/ARCHITECTURE.md`](file:///home/yash-bajaj/Downloads/project/ipo%20checking/docs/ARCHITECTURE.md).
+See the complete system architecture at [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
 
 ### Core Highlights
 - **Topology:** Next.js 15 App Router on Vercel Hobby + Neon Serverless PostgreSQL (`@neondatabase/serverless` + Drizzle ORM).

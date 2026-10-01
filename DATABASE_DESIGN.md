@@ -1,6 +1,6 @@
 # Database Design & Relational Schema: Neon PostgreSQL
 
-See the complete database schema design at [`docs/DATABASE_DESIGN.md`](file:///home/yash-bajaj/Downloads/project/ipo%20checking/docs/DATABASE_DESIGN.md).
+See the complete database schema design at [`docs/DATABASE_DESIGN.md`](./docs/DATABASE_DESIGN.md).
 
 ### Core Highlights
 - **Engine:** Neon PostgreSQL using Drizzle ORM.

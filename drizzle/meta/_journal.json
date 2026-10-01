@@ -8,6 +8,27 @@
       "when": 1790066878570,
       "tag": "0000_tranquil_bug",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790456593816,
+      "tag": "0001_pan_encryption_text",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790478000000,
+      "tag": "0002_gemini_about_enrichment",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790481000000,
+      "tag": "0003_legal_consent_fields",
+      "breakpoints": true
     }
   ]
 }

@@ -1,26 +1,70 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-canvas: #0b0f17;
+  --color-surface-1: #111827;
+  --color-surface-2: #1f2937;
+  --color-surface-3: #1e293b;
+  --color-surface-border: rgba(255, 255, 255, 0.06);
+  --color-surface-border-strong: rgba(255, 255, 255, 0.12);
+
+  --color-primary-emerald: #00d084;
+  --color-primary-emerald-dim: #003920;
+  --color-secondary-amber: #f59e0b;
+  --color-secondary-amber-dim: #472a00;
+  --color-tertiary-iris: #6366f1;
+  --color-tertiary-iris-dim: #1000a9;
+  --color-semantic-crimson: #f43f5e;
+  --color-semantic-crimson-dim: #690005;
+
+  --color-text-primary: #dfe2ee;
+  --color-text-secondary: #bacbbd;
+  --color-text-muted: #859588;
+
+  --font-sans: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc;
+  --foreground: #0f172a;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html.dark {
+  --background: #0b0f17;
+  --foreground: #dfe2ee;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* OpenType Tabular Numbers & Slashed Zero for financial numerical precision */
+.font-numeric {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1, "zero" 1;
+}
+
+/* Subtle hardware radial luminescence for volatile metrics */
+.glow-emerald {
+  box-shadow: 0 0 20px -6px rgba(0, 208, 132, 0.25);
+}
+
+.glow-amber {
+  box-shadow: 0 0 20px -6px rgba(245, 158, 11, 0.25);
+}
+
+/* Ghost outlines */
+.ghost-border {
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.ghost-border-strong {
+  border: 1px solid rgba(255, 255, 255, 0.14);
 }
