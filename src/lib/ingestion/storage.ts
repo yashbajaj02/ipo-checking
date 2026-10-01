@@ -8,7 +8,7 @@ import {
   ipoListingResults,
   ingestionLogs,
 } from '@/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and } from 'drizzle-orm';
 import {
   NormalizedIpoPayload,
   NormalizedGmpPayload,
@@ -306,6 +306,30 @@ export async function saveIngestionDataToNeon(
             .orderBy(desc(ipoGmpHistory.sourceTimestamp))
             .limit(1);
 
+          // Prevent duplicate snapshots for the same IPO when sourceTimestamp is identical to an already stored snapshot
+          const incomingTime = new Date(gmpValidation.data.sourceTimestamp).getTime();
+          if (
+            latestExistingGmp?.sourceTimestamp &&
+            new Date(latestExistingGmp.sourceTimestamp).getTime() === incomingTime
+          ) {
+            continue;
+          }
+
+          const [existingSameTimestamp] = await db
+            .select({ id: ipoGmpHistory.id })
+            .from(ipoGmpHistory)
+            .where(
+              and(
+                eq(ipoGmpHistory.ipoId, upsertedIpo.id),
+                eq(ipoGmpHistory.sourceTimestamp, gmpValidation.data.sourceTimestamp)
+              )
+            )
+            .limit(1);
+
+          if (existingSameTimestamp) {
+            continue;
+          }
+
           const mergedGmp = mergeGmpSnapshot(latestExistingGmp, gmpValidation.data);
 
           await db.insert(ipoGmpHistory).values({
@@ -373,6 +397,30 @@ export async function saveIngestionDataToNeon(
             .where(eq(ipoGmpHistory.ipoId, existingIpo.id))
             .orderBy(desc(ipoGmpHistory.sourceTimestamp))
             .limit(1);
+
+          // Prevent duplicate snapshots for the same IPO when sourceTimestamp is identical to an already stored snapshot
+          const incomingTime = new Date(gmpValidation.data.sourceTimestamp).getTime();
+          if (
+            latestExistingGmp?.sourceTimestamp &&
+            new Date(latestExistingGmp.sourceTimestamp).getTime() === incomingTime
+          ) {
+            continue;
+          }
+
+          const [existingSameTimestamp] = await db
+            .select({ id: ipoGmpHistory.id })
+            .from(ipoGmpHistory)
+            .where(
+              and(
+                eq(ipoGmpHistory.ipoId, existingIpo.id),
+                eq(ipoGmpHistory.sourceTimestamp, gmpValidation.data.sourceTimestamp)
+              )
+            )
+            .limit(1);
+
+          if (existingSameTimestamp) {
+            continue;
+          }
 
           const mergedGmp = mergeGmpSnapshot(latestExistingGmp, gmpValidation.data);
 

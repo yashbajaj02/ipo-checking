@@ -685,7 +685,7 @@ export async function getRecentPastIpos(options?: {
         priceBandMax,
         issuePrice: l?.issuePrice != null && !isNaN(Number(l.issuePrice))
           ? Number(l.issuePrice)
-          : priceBandMax != null
+          : priceBandMin && priceBandMax && priceBandMin === priceBandMax
           ? priceBandMax
           : undefined,
         lotSize,

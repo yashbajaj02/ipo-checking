@@ -247,7 +247,7 @@ export default function IpoDetailPage({ params }: PageProps) {
                 <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#121826]">
                   <span className="text-slate-500 dark:text-slate-400 block text-[10px]">Issue Price</span>
                   <span className="font-bold text-slate-900 dark:text-white font-numeric text-xs sm:text-sm mt-0.5 block">
-                    {currentIpo.issuePrice ? `₹${currentIpo.issuePrice}` : (currentIpo.priceBandMax ? `₹${currentIpo.priceBandMax}` : '—')}
+                    {currentIpo.issuePrice ? `₹${currentIpo.issuePrice}` : '—'}
                   </span>
                 </div>
 
@@ -265,8 +265,6 @@ export default function IpoDetailPage({ params }: PageProps) {
                   <span className="font-bold text-slate-900 dark:text-white font-numeric text-xs sm:text-sm mt-0.5 block">
                     {currentIpo.minInvestment
                       ? `₹${currentIpo.minInvestment.toLocaleString('en-IN')}`
-                      : currentIpo.lotSize && currentIpo.priceBandMax
-                      ? `₹${(currentIpo.lotSize * currentIpo.priceBandMax).toLocaleString('en-IN')}`
                       : '—'}
                   </span>
                 </div>
@@ -313,7 +311,7 @@ export default function IpoDetailPage({ params }: PageProps) {
                 <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#121826]">
                   <span className="text-slate-500 dark:text-slate-400 block text-[10px]">Listing Exchange</span>
                   <span className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm mt-0.5 block">
-                    {currentIpo.listingExchange || 'NSE, BSE'}
+                    {currentIpo.listingExchange || '—'}
                   </span>
                 </div>
 
@@ -724,7 +722,11 @@ export default function IpoDetailPage({ params }: PageProps) {
                   <div className="p-2.5 bg-slate-50 dark:bg-[#121826] rounded-xl">
                     <span className="text-[10px] text-slate-400 block">Issue Price</span>
                     <strong className="text-slate-900 dark:text-white text-sm">
-                      ₹{currentIpo.listing?.issuePrice || currentIpo.priceBandMax || '—'}
+                      {currentIpo.listing?.issuePrice != null
+                        ? `₹${currentIpo.listing.issuePrice}`
+                        : currentIpo.issuePrice != null
+                        ? `₹${currentIpo.issuePrice}`
+                        : '—'}
                     </strong>
                   </div>
 
